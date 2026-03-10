@@ -86,7 +86,7 @@ DATABASES = {
 }
 
 DATABASES['default']['OPTIONS'] = {
-    'options': '-c search_path=user_management_service'
+    'options': '-c search_path=personal_finance_tracker'
 }
 
 # Password validation

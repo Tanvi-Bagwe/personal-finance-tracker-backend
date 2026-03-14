@@ -6,9 +6,24 @@ from .models import UserProfile
 
 class RegisterSerializer(serializers.Serializer):
 
-    username = serializers.CharField()
+    username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate_username(self, value):
+
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists")
+
+        return value
+
+    def validate_email(self, value):
+
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already registered")
+
+        return value
+
 
     def create(self, validated_data):
 

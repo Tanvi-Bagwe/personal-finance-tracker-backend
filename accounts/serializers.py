@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+
+from .constant import AuthFields
 from .models import UserProfile
 
 
@@ -28,9 +30,9 @@ class RegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
 
         user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=validated_data["password"]
+            username=validated_data[AuthFields.USERNAME],
+            email=validated_data[AuthFields.EMAIL],
+            password=validated_data[AuthFields.PASSWORD]
         )
 
         UserProfile.objects.create(user=user)
@@ -45,8 +47,8 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
 
         user = authenticate(
-            username=data["username"],
-            password=data["password"]
+            username=data[AuthFields.USERNAME],
+            password=data[AuthFields.PASSWORD]
         )
 
         if not user:

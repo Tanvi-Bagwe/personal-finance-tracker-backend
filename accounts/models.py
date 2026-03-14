@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser, User
 from django.db import models
 
+from accounts.constant import AuthFields
+
+
 class UserProfile(models.Model):
 
     id = models.AutoField(primary_key=True)
@@ -8,7 +11,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        db_column="user_id"
+        db_column=AuthFields.USER_ID
     )
 
     phone = models.CharField(max_length=20, null=True)

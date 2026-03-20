@@ -2,17 +2,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from accounts.constant import AuthFields
 from .constant import CategoryFields
 from .models import Category
 from .serializers import CreateCategorySerializer, CategorySerializer
 
 
 class CreateCategoryView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         serializer = CreateCategorySerializer(data=request.data)
 
         if not serializer.is_valid():
@@ -21,16 +20,22 @@ class CreateCategoryView(APIView):
         name = serializer.validated_data[CategoryFields.NAME]
         category_type = serializer.validated_data[CategoryFields.TYPE]
 
-        category = Category.objects.create(
-            user=request.user,
-            name=name,
-            type=category_type
-        )
+        if Category.objects.filter(user=request.user, name__iexact=name).exists():
+            return Response({AuthFields.ERROR: "A category with this name already exists."}, status=400)
 
-        return Response({
-            "message": "Category created",
-            "id": category.id
-        })
+        try:
+            category = Category.objects.create(
+                user=request.user,
+                name=name,
+                type=category_type
+            )
+            return Response({
+                AuthFields.MESSAGE: "Category created",
+                CategoryFields.ID: category.id
+            }, status=201)
+
+        except IntegrityError:
+            return Response({AuthFields.ERROR: "A category with this name already exists."}, status=400)
 
 class ListCategoriesView(APIView):
     permission_classes = [IsAuthenticated]

@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from .constant import AuthFields
 from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer
@@ -12,7 +12,6 @@ from .tokens import password_reset_token
 class RegisterView(APIView):
 
     def post(self, request):
-
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -26,14 +25,13 @@ class RegisterView(APIView):
             "errors": serializer.errors
         }, status=400)
 
+
 class LoginView(APIView):
 
     def post(self, request):
-
         serializer = LoginSerializer(data=request.data)
 
         if serializer.is_valid():
-
             user = serializer.validated_data["user"]
 
             refresh = RefreshToken.for_user(user)
@@ -47,22 +45,18 @@ class LoginView(APIView):
 
 
 class ProfileView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-
         serializer = ProfileSerializer(request.user)
 
         return Response(serializer.data)
 
 
 class ChangePasswordView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         user = request.user
 
         old_password = request.data.get(AuthFields.OLD_PASSWORD)
@@ -100,7 +94,6 @@ class ForgotPasswordView(APIView):
 class ResetPasswordView(APIView):
 
     def post(self, request):
-
         user_id = request.data.get(AuthFields.USER_ID)
         token = request.data.get(AuthFields.TOKEN)
         new_password = request.data.get(AuthFields.NEW_PASSWORD)
@@ -114,3 +107,36 @@ class ResetPasswordView(APIView):
         user.save()
 
         return Response({AuthFields.MESSAGE: "Password reset successful"})
+
+
+class AuthValidateTokenView(APIView):
+    def post(self, request):
+        access_token_str = request.data.get(AuthFields.ACCESS)
+        refresh_token_str = request.data.get(AuthFields.REFRESH)
+
+        if not access_token_str:
+            return Response({"error": "Access token required"}, status=400)
+
+        # 1. Try validating the Access Token
+        try:
+            AccessToken(access_token_str)
+            return Response({"status": "valid", "message": "Access token is valid"}, status=200)
+
+        except Exception:
+            # This catches BOTH InvalidToken AND low-level decoding errors (the 500 culprits)
+
+            # 2. Access is dead/malformed. Try the Refresh Token.
+            if not refresh_token_str:
+                return Response({"error": "Access invalid/expired and no refresh provided"}, status=401)
+
+            try:
+                refresh = RefreshToken(refresh_token_str)
+                # 3. Success!
+                return Response({
+                    "status": "refreshed",
+                    AuthFields.ACCESS: str(refresh.access_token),
+                }, status=200)
+
+            except Exception:
+                # 4. Refresh token is also malformed or expired
+                return Response({"error": "Session expired, please login again"}, status=401)

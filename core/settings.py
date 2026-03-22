@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
-from pathlib import Path
-from dotenv import load_dotenv
-import dj_database_url
 from datetime import timedelta
+from pathlib import Path
+
+import dj_database_url
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
     'accounts',
     'category',
     'transaction',
+    'django_apscheduler',
+    'reminder',
 ]
 
 MIDDLEWARE = [

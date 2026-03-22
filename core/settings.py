@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'transaction',
     'django_apscheduler',
     'reminder',
+    'dashboard',
 ]
 
 MIDDLEWARE = [

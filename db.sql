@@ -34,9 +34,9 @@ CREATE TABLE personal_finance_tracker.reminders (
     title VARCHAR(150) NOT NULL,
     amount DECIMAL(12, 2),
     due_date DATE NOT NULL,
-    reminder_days_before INT DEFAULT 1, -- How many days before to send email
-    is_read BOOLEAN DEFAULT FALSE,      -- For app notifications
-    is_completed BOOLEAN DEFAULT FALSE, -- To hide from "Pending" list
+    reminder_days_before INT DEFAULT 1,
+    is_read BOOLEAN DEFAULT FALSE,
+    is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_reminder_user FOREIGN KEY(user_id) REFERENCES personal_finance_tracker.auth_user(id) ON DELETE CASCADE
 );

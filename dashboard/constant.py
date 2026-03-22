@@ -1,0 +1,10 @@
+class DashboardFields:
+    INCOME = "income"
+    EXPENSE = "expense"
+    BALANCE = "balance"
+    CATEGORIES = "category_data"
+    MONTHLY_STATS = "monthly_stats"
+    REMINDERS = "reminder_stats"
+    PENDING = "pending"
+    OVERDUE = "overdue"
+    SUMMARY = "summary"

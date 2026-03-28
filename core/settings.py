@@ -107,7 +107,7 @@ DATABASES = {
 }
 
 DATABASES['default']['OPTIONS'] = {
-    'options': '-c search_path=personal_finance_tracker'
+    'options': '-c search_path=public'
 }
 
 # Password validation

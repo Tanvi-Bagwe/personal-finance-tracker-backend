@@ -1,3 +1,8 @@
+DROP SCHEMA IF EXISTS personal_finance_tracker;
+
+CREATE SCHEMA IF NOT EXISTS personal_finance_tracker
+    AUTHORIZATION postgres;
+
 CREATE TABLE personal_finance_tracker.user_profiles (
     id SERIAL PRIMARY KEY,
     user_id INT UNIQUE,
@@ -27,6 +32,7 @@ CREATE TABLE personal_finance_tracker.transactions (
     FOREIGN KEY (user_id) REFERENCES personal_finance_tracker.auth_user(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES personal_finance_tracker.categories(id) ON DELETE SET NULL
 );
+
 
 CREATE TABLE personal_finance_tracker.reminders (
     id SERIAL PRIMARY KEY,

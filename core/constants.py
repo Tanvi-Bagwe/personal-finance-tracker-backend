@@ -23,6 +23,9 @@ class ResponseMessages:
     TRANSACTION_RECORDED = "Transaction recorded successfully!"
     TRANSACTION_UPDATED = "Transaction updated successfully!"
     TRANSACTION_DELETED = "Transaction deleted successfully!"
+    CATEGORY_RECORDED = "Category recorded successfully!"
+    CATEGORY_UPDATED = "Category updated successfully!"
+    CATEGORY_DELETED = "Category deleted successfully!"
 
     # Error messages
     INVALID_CREDENTIALS = "Invalid credentials"
@@ -37,3 +40,5 @@ class ResponseMessages:
     OTP_EXPIRED = "OTP expired"
     INVALID_CATEGORY = "Invalid category selected"
     TRANSACTION_NOT_FOUND="Transaction not found"
+    CATEGORY_NOT_FOUND = "Transaction not found"
+    CATEGORY_EXISTS="A category with this name already exists."

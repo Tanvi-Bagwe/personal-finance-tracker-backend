@@ -1,8 +1,11 @@
+from django.db import IntegrityError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from accounts.constant import AuthFields
+from core.constants import ResponseMessages, ResponseFields
 from .constant import CategoryFields
 from .models import Category
 from .serializers import CreateCategorySerializer, CategorySerializer
@@ -14,14 +17,13 @@ class CreateCategoryView(APIView):
     def post(self, request):
         serializer = CreateCategorySerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         name = serializer.validated_data[CategoryFields.NAME]
         category_type = serializer.validated_data[CategoryFields.TYPE]
 
         if Category.objects.filter(user=request.user, name__iexact=name).exists():
-            return Response({ResponseFields.ERROR: "A category with this name already exists."}, status=400)
+            raise ValidationError(ResponseMessages.CATEGORY_EXISTS)
 
         try:
             category = Category.objects.create(
@@ -30,12 +32,12 @@ class CreateCategoryView(APIView):
                 type=category_type
             )
             return Response({
-                ResponseFields.MESSAGE: "Category created",
+                ResponseFields.MESSAGE: ResponseMessages.CATEGORY_RECORDED,
                 CategoryFields.ID: category.id
-            }, status=201)
+            })
 
         except IntegrityError:
-            return Response({ResponseFields.ERROR: "A category with this name already exists."}, status=400)
+            raise ValidationError(ResponseMessages.CATEGORY_EXISTS)
 
 class ListCategoriesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -61,19 +63,18 @@ class UpdateCategoryView(APIView):
             )
 
         except Category.DoesNotExist:
-            return Response({"error": "Category not found"}, status=404)
+            raise NotFound(ResponseMessages.CATEGORY_NOT_FOUND)
 
         serializer = CreateCategorySerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         category.name = serializer.validated_data[CategoryFields.NAME]
         category.type = serializer.validated_data[CategoryFields.TYPE]
 
         category.save()
 
-        return Response({"message": "Category updated"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.CATEGORY_UPDATED})
 
 
 class DeleteCategoryView(APIView):
@@ -89,8 +90,8 @@ class DeleteCategoryView(APIView):
             )
 
         except Category.DoesNotExist:
-            return Response({"error": "Category not found"}, status=404)
+            raise NotFound(ResponseMessages.CATEGORY_NOT_FOUND)
 
         category.delete()
 
-        return Response({"message": "Category deleted"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.CATEGORY_DELETED})

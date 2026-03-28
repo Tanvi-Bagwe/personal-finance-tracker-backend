@@ -1,5 +1,5 @@
 from django.db.models import Sum, Q
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, Coalesce
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -20,10 +20,10 @@ class DashboardSummaryView(APIView):
         """Fetch dashboard data for the authenticated user"""
         user = request.user
 
-        # Calculate total income and expense
+        # Calculate total income and expense (Coalesce handles None values)
         totals = Transaction.objects.filter(user=user).aggregate(
-            total_income=Sum('amount', filter=Q(type='income')) or 0,
-            total_expense=Sum('amount', filter=Q(type='expense')) or 0
+            total_income=Coalesce(Sum('amount', filter=Q(type='income')), 0),
+            total_expense=Coalesce(Sum('amount', filter=Q(type='expense')), 0)
         )
 
         # Get expenses by category for pie chart

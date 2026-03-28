@@ -49,7 +49,6 @@ def check_and_send_reminders():
                 email.send()
 
                 # Stamp the record to prevent duplicate emails today
-                r.last_notified_at = today
                 r.save()
 
             except Exception as e:

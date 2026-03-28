@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from core.constants import ResponseMessages, ResponseFields
 from dashboard.constant import DashboardFields
 from reminder.models import Reminder
 from datetime import date, timedelta
@@ -51,5 +52,6 @@ class DashboardSummaryView(APIView):
             },
             "category_distribution": category_data,
             "trends": monthly_stats,
-            "reminders": reminder_stats
+            "reminders": reminder_stats,
+            ResponseFields.MESSAGE: ResponseMessages.DASHBOARD_SUCCESSFUL
         })

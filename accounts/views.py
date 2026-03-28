@@ -170,5 +170,5 @@ class ConfirmPasswordResetOTPView(APIView):
         PasswordResetOTP.objects.filter(user=user).delete()
 
         return Response({
-            ResponseFields.MESSAGE: ResponseMessages.PASSWORD_RESET_SUCCESSFULL
+            ResponseFields.MESSAGE: ResponseMessages.PASSWORD_RESET_SUCCESSFUL
         })

@@ -17,8 +17,9 @@ class ResponseMessages:
     PASSWORD_UPDATE_SUCCESS = "Password updated successfully!"
     ACCESS_TOKEN_VALID = "Access token is valid!"
     OTP_SENT = "OTP sent Successfully!"
-    PASSWORD_RESET_SUCCESSFULL = "Password reset successfully!"
+    PASSWORD_RESET_SUCCESSFUL = "Password reset successfully!"
     ACCESS_TOKEN_REFRESHED = "Access token refreshed successfully!"
+    DASHBOARD_SUCCESSFUL = "Dashboard initialized successfully!"
 
     # Error messages
     INVALID_CREDENTIALS = "Invalid credentials"

@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from rest_framework import serializers
 from .models import Reminder
-from .constant import ReminderFields
 
 
 class ReminderSerializer(serializers.ModelSerializer):

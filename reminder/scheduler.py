@@ -2,13 +2,14 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django_apscheduler.jobstores import DjangoJobStore
 from django.core.mail import send_mail
 from datetime import date, timedelta
+
+from core.settings import EMAIL_HOST_USER
 from .models import Reminder
 
 
 def check_and_send_reminders():
     today = date.today()
-    # Filter: Not completed AND not already notified today
-    pending = Reminder.objects.filter(is_completed=False).exclude(last_notified_at=today)
+    pending = Reminder.objects.filter(is_completed=False)
 
     for r in pending:
         trigger_date = r.due_date - timedelta(days=r.reminder_days_before)
@@ -18,7 +19,7 @@ def check_and_send_reminders():
                 send_mail(
                     subject=f"Action Required: {r.title}",
                     message=f"Hello {r.user.username},\n\nYour payment for '{r.title}' (€{r.amount}) is due on {r.due_date}.",
-                    from_email=None,  # Uses DEFAULT_FROM_EMAIL in settings
+                    from_email=EMAIL_HOST_USER,
                     recipient_list=[r.user.email],
                 )
                 r.last_notified_at = today  # Mark as notified for today

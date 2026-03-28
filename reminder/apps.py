@@ -6,9 +6,5 @@ class ReminderConfig(AppConfig):
     name = 'reminder'
 
     def ready(self):
-        # We only start the scheduler if we are NOT in the auto-reloader
-        # (prevents starting two schedulers in dev mode)
-        import os
-        if os.environ.get('RUN_MAIN') == 'true':
-            from .scheduler import start_reminder_scheduler
-            start_reminder_scheduler()
+        from .scheduler import start_reminder_scheduler
+        start_reminder_scheduler()

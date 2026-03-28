@@ -4,6 +4,7 @@ class AuthFields:
     USER_ID = "user_id"
     USERNAME = "username"
     EMAIL = "email"
+    OTP = 'otp'
 
     # authentication
     PASSWORD = "password"

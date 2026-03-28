@@ -1,11 +1,13 @@
-from django.contrib.auth.models import AbstractUser, User
+import datetime
+
+from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 
 from accounts.constant import AuthFields
 
 
 class UserProfile(models.Model):
-
     id = models.AutoField(primary_key=True)
 
     user = models.OneToOneField(
@@ -23,3 +25,17 @@ class UserProfile(models.Model):
     class Meta:
         managed = False
         db_table = "user_profiles"
+
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        managed = False
+        db_table = 'password_reset_otp'
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + datetime.timedelta(minutes=10)

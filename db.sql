@@ -43,3 +43,14 @@ CREATE TABLE personal_finance_tracker.reminders (
 
 ALTER TABLE personal_finance_tracker.reminders
 ADD COLUMN last_notified_at DATE;
+
+CREATE TABLE personal_finance_tracker.password_reset_otp (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_verified BOOLEAN DEFAULT FALSE,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES personal_finance_tracker.auth_user(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_otp_user_id ON personal_finance_tracker.password_reset_otp(user_id);

@@ -7,7 +7,6 @@ from .models import UserProfile
 
 
 class RegisterSerializer(serializers.Serializer):
-
     username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6)
@@ -26,7 +25,6 @@ class RegisterSerializer(serializers.Serializer):
 
         return value
 
-
     def create(self, validated_data):
 
         user = User.objects.create_user(
@@ -39,13 +37,12 @@ class RegisterSerializer(serializers.Serializer):
 
         return user
 
-class LoginSerializer(serializers.Serializer):
 
+class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, data):
-
         user = authenticate(
             username=data[AuthFields.USERNAME],
             password=data[AuthFields.PASSWORD]
@@ -58,8 +55,18 @@ class LoginSerializer(serializers.Serializer):
 
         return data
 
-class ProfileSerializer(serializers.ModelSerializer):
 
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email"]
+
+
+class RequestOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(min_length=8)

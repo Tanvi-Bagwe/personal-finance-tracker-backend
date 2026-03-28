@@ -23,9 +23,12 @@ class ResponseMessages:
     TRANSACTION_RECORDED = "Transaction recorded successfully!"
     TRANSACTION_UPDATED = "Transaction updated successfully!"
     TRANSACTION_DELETED = "Transaction deleted successfully!"
-    CATEGORY_RECORDED = "Category recorded successfully!"
+    CATEGORY_RECORDED = "Category created successfully!"
     CATEGORY_UPDATED = "Category updated successfully!"
     CATEGORY_DELETED = "Category deleted successfully!"
+    REMINDER_CREATED = "Reminder created successfully!"
+    REMINDER_UPDATED = "Reminder updated successfully!"
+    REMINDER_DELETED = "Reminder deleted successfully!"
 
     # Error messages
     INVALID_CREDENTIALS = "Invalid credentials"

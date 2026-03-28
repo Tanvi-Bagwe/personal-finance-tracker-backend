@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from accounts.constant import AuthFields
+from core.constants import ResponseFields, ResponseMessages
 from .models import Reminder
 from .serializers import ReminderSerializer, CreateReminderSerializer
 from .constant import ReminderFields
@@ -26,8 +27,7 @@ class ReminderCreateView(APIView):
 
     def post(self, request):
         serializer = CreateReminderSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         reminder = Reminder.objects.create(
             user=request.user,
@@ -36,7 +36,7 @@ class ReminderCreateView(APIView):
             due_date=serializer.validated_data[ReminderFields.DUE_DATE],
             reminder_days_before=serializer.validated_data.get(ReminderFields.REMINDER_DAYS, 1)
         )
-        return Response({ResponseFields.MESSAGE: "Reminder created successfully", "id": reminder.id}, status=201)
+        return Response({ResponseFields.MESSAGE: ResponseMessages.REMINDER_CREATED, "id": reminder.id})
 
 # 3. UPDATE REMINDER (Full Edit)
 class ReminderUpdateView(APIView):
@@ -46,8 +46,7 @@ class ReminderUpdateView(APIView):
         reminder = get_object_or_404(Reminder, id=pk, user=request.user)
         serializer = CreateReminderSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         reminder.title = serializer.validated_data[ReminderFields.TITLE]
         reminder.amount = serializer.validated_data.get(ReminderFields.AMOUNT)
@@ -55,7 +54,7 @@ class ReminderUpdateView(APIView):
         reminder.reminder_days_before = serializer.validated_data.get(ReminderFields.REMINDER_DAYS, 1)
         reminder.save()
 
-        return Response({ResponseFields.MESSAGE: "Reminder updated successfully"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.REMINDER_UPDATED})
 
 # 4. DELETE REMINDER
 class ReminderDeleteView(APIView):
@@ -64,7 +63,7 @@ class ReminderDeleteView(APIView):
     def delete(self, request, pk):
         reminder = get_object_or_404(Reminder, id=pk, user=request.user)
         reminder.delete()
-        return Response({ResponseFields.MESSAGE: "Reminder deleted successfully"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.REMINDER_DELETED})
 
 # 5. REMINDER ACTION (Patch for Status Toggle)
 class ReminderActionView(APIView):
@@ -79,4 +78,4 @@ class ReminderActionView(APIView):
             reminder.is_completed = request.data['is_completed']
 
         reminder.save()
-        return Response({ResponseFields.MESSAGE: "Reminder status updated"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.REMINDER_UPDATED})

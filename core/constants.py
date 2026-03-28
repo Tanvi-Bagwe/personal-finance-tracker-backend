@@ -20,6 +20,9 @@ class ResponseMessages:
     PASSWORD_RESET_SUCCESSFUL = "Password reset successfully!"
     ACCESS_TOKEN_REFRESHED = "Access token refreshed successfully!"
     DASHBOARD_SUCCESSFUL = "Dashboard initialized successfully!"
+    TRANSACTION_RECORDED = "Transaction recorded successfully!"
+    TRANSACTION_UPDATED = "Transaction updated successfully!"
+    TRANSACTION_DELETED = "Transaction deleted successfully!"
 
     # Error messages
     INVALID_CREDENTIALS = "Invalid credentials"
@@ -32,3 +35,5 @@ class ResponseMessages:
     OTP_SEND_FAILED = "Failed to send email. Please try again later."
     INVALID_EMAIL_OTP = "Invalid OTP or Email"
     OTP_EXPIRED = "OTP expired"
+    INVALID_CATEGORY = "Invalid category selected"
+    TRANSACTION_NOT_FOUND="Transaction not found"

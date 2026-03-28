@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.constant import AuthFields
+from core.constants import ResponseFields, ResponseMessages
 from .constant import TransactionFields
 from .models import Transaction, Category
 from .serializers import CreateTransactionSerializer, TransactionSerializer
@@ -15,15 +16,14 @@ class CreateTransactionView(APIView):
     def post(self, request):
         serializer = CreateTransactionSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         # Ensure the category belongs to the user
         category_id = serializer.validated_data[TransactionFields.CATEGORY]
         try:
             category = Category.objects.get(id=category_id, user=request.user)
         except Category.DoesNotExist:
-            return Response({ResponseFields.ERROR: "Invalid category selected"}, status=400)
+            raise ValidationError(ResponseMessages.INVALID_CATEGORY)
 
         transaction = Transaction.objects.create(
             user=request.user,
@@ -35,9 +35,9 @@ class CreateTransactionView(APIView):
         )
 
         return Response({
-            ResponseFields.MESSAGE: "Transaction recorded",
+            ResponseFields.MESSAGE: ResponseMessages.TRANSACTION_RECORDED,
             TransactionFields.ID: transaction.id
-        }, status=201)
+        })
 
 
 class ListTransactionsView(APIView):
@@ -57,18 +57,17 @@ class UpdateTransactionView(APIView):
         try:
             transaction = Transaction.objects.get(id=transaction_id, user=request.user)
         except Transaction.DoesNotExist:
-            return Response({ResponseFields.ERROR: "Transaction not found"}, status=404)
+            raise NotFound(ResponseMessages.TRANSACTION_NOT_FOUND)
 
         serializer = CreateTransactionSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
+        serializer.is_valid(raise_exception=True)
 
         # Check category validity again if changing category
         category_id = serializer.validated_data[TransactionFields.CATEGORY]
         try:
             category = Category.objects.get(id=category_id, user=request.user)
         except Category.DoesNotExist:
-            return Response({ResponseFields.ERROR: "Invalid category selected"}, status=400)
+            raise ValidationError(ResponseMessages.INVALID_CATEGORY)
 
         transaction.amount = serializer.validated_data[TransactionFields.AMOUNT]
         transaction.category = category
@@ -78,7 +77,7 @@ class UpdateTransactionView(APIView):
 
         transaction.save()
 
-        return Response({ResponseFields.MESSAGE: "Transaction updated"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.TRANSACTION_UPDATED})
 
 
 class DeleteTransactionView(APIView):
@@ -88,10 +87,10 @@ class DeleteTransactionView(APIView):
         try:
             transaction = Transaction.objects.get(id=transaction_id, user=request.user)
         except Transaction.DoesNotExist:
-            return Response({ResponseFields.ERROR: "Transaction not found"}, status=404)
+            raise NotFound(ResponseMessages.TRANSACTION_NOT_FOUND)
 
         transaction.delete()
-        return Response({ResponseFields.MESSAGE: "Transaction deleted"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.TRANSACTION_DELETED})
 
 
 class RetrieveTransactionView(APIView):

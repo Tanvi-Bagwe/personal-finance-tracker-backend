@@ -64,8 +64,8 @@ def start_reminder_scheduler():
     scheduler.add_job(
         check_and_send_reminders,
         trigger='cron',
-        hour=7,
-        minute=42,
+        hour=8,
+        minute=00,
         id="reminder_job",
         max_instances=1,
         replace_existing=True,

@@ -97,6 +97,16 @@ class DeleteCategoryView(APIView):
         except Category.DoesNotExist:
             raise NotFound(ResponseMessages.CATEGORY_NOT_FOUND)
 
+        # Check if transactions exist for this category
+        from transaction.models import Transaction
+
+        transactions_count = Transaction.objects.filter(category_id=category_id).count()
+
+        if transactions_count > 0:
+            raise ValidationError(
+                f"Cannot delete category. {transactions_count} transaction(s) are associated with this category."
+            )
+
         category.delete()
 
         return Response({ResponseFields.MESSAGE: ResponseMessages.CATEGORY_DELETED})

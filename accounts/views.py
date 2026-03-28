@@ -1,7 +1,9 @@
 import random
 
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -112,37 +114,50 @@ class AuthValidateTokenView(APIView):
 
 class RequestPasswordResetOTPView(APIView):
     def post(self, request):
+        # 1. Keep your Serializer Validation
         serializer = RequestOTPSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data[AuthFields.EMAIL]
 
+        # 2. Keep your Security-First User Lookup
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Generic response for security
+            # Generic response to prevent "Email Harvesting"
             return Response({AuthFields.MESSAGE: "If an account exists, an OTP has been sent."})
 
-        # Generate OTP
+        # 3. Generate OTP
         otp_code = str(random.randint(100000, 999999))
-        print(otp_code)
 
-        # Clean up old OTPs and create new one
+        # 4. Database cleanup and creation
         PasswordResetOTP.objects.filter(user=user).delete()
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
-        # Send Email
+        # 5. Professional HTML Email Logic
+        context = {'otp_code': otp_code}
+        html_content = render_to_string('emails/otp_reset.html', context)
+        text_content = strip_tags(html_content)  # Fallback for plain-text clients
+
         try:
-            send_mail(
-                subject="Your Password Reset OTP",
-                message=f"Your OTP is: {otp_code}. It expires in 10 minutes.",
+            email_message = EmailMultiAlternatives(
+                subject="🔒 Your Password Reset Code",
+                body=text_content,
                 from_email=EMAIL_HOST_USER,
-                recipient_list=[email],
-                fail_silently=False,
+                to=[email],
             )
-        finally:
-            print("OTP sent successfully")
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
+
+            # Keep your debug logs for dev
+            print(f"DEBUG: OTP {otp_code} sent to {email}")
+
+        except Exception as e:
+            print(f"SMTP Error: {e}")
+            # If email fails, we should let the user know something went wrong internally
+            return Response({AuthFields.ERROR: "Failed to send email. Please try again later."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({AuthFields.MESSAGE: "OTP sent successfully."})
 

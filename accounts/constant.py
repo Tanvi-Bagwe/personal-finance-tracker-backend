@@ -18,7 +18,3 @@ class AuthFields:
 
     # password reset
     RESET_TOKEN = "token"
-
-    # responses
-    MESSAGE = "message"
-    ERROR = "error"

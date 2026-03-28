@@ -23,7 +23,7 @@ class CreateTransactionView(APIView):
         try:
             category = Category.objects.get(id=category_id, user=request.user)
         except Category.DoesNotExist:
-            return Response({AuthFields.ERROR: "Invalid category selected"}, status=400)
+            return Response({ResponseFields.ERROR: "Invalid category selected"}, status=400)
 
         transaction = Transaction.objects.create(
             user=request.user,
@@ -35,7 +35,7 @@ class CreateTransactionView(APIView):
         )
 
         return Response({
-            AuthFields.MESSAGE: "Transaction recorded",
+            ResponseFields.MESSAGE: "Transaction recorded",
             TransactionFields.ID: transaction.id
         }, status=201)
 
@@ -57,7 +57,7 @@ class UpdateTransactionView(APIView):
         try:
             transaction = Transaction.objects.get(id=transaction_id, user=request.user)
         except Transaction.DoesNotExist:
-            return Response({AuthFields.ERROR: "Transaction not found"}, status=404)
+            return Response({ResponseFields.ERROR: "Transaction not found"}, status=404)
 
         serializer = CreateTransactionSerializer(data=request.data)
         if not serializer.is_valid():
@@ -68,7 +68,7 @@ class UpdateTransactionView(APIView):
         try:
             category = Category.objects.get(id=category_id, user=request.user)
         except Category.DoesNotExist:
-            return Response({AuthFields.ERROR: "Invalid category selected"}, status=400)
+            return Response({ResponseFields.ERROR: "Invalid category selected"}, status=400)
 
         transaction.amount = serializer.validated_data[TransactionFields.AMOUNT]
         transaction.category = category
@@ -78,7 +78,7 @@ class UpdateTransactionView(APIView):
 
         transaction.save()
 
-        return Response({AuthFields.MESSAGE: "Transaction updated"})
+        return Response({ResponseFields.MESSAGE: "Transaction updated"})
 
 
 class DeleteTransactionView(APIView):
@@ -88,10 +88,10 @@ class DeleteTransactionView(APIView):
         try:
             transaction = Transaction.objects.get(id=transaction_id, user=request.user)
         except Transaction.DoesNotExist:
-            return Response({AuthFields.ERROR: "Transaction not found"}, status=404)
+            return Response({ResponseFields.ERROR: "Transaction not found"}, status=404)
 
         transaction.delete()
-        return Response({AuthFields.MESSAGE: "Transaction deleted"})
+        return Response({ResponseFields.MESSAGE: "Transaction deleted"})
 
 
 class RetrieveTransactionView(APIView):

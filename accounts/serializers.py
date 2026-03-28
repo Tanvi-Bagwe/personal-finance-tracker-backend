@@ -2,9 +2,10 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
+from core.constants import ResponseMessages
 from .constant import AuthFields
 from .models import UserProfile
-
+from rest_framework.exceptions import ValidationError
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
@@ -12,29 +13,22 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, min_length=6)
 
     def validate_username(self, value):
-
         if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("Username already exists")
-
+            raise ValidationError(ResponseMessages.USERNAME_EXISTS)
         return value
 
     def validate_email(self, value):
-
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already registered")
-
+            raise ValidationError(ResponseMessages.EMAIL_EXISTS)
         return value
 
     def create(self, validated_data):
-
         user = User.objects.create_user(
             username=validated_data[AuthFields.USERNAME],
             email=validated_data[AuthFields.EMAIL],
             password=validated_data[AuthFields.PASSWORD]
         )
-
         UserProfile.objects.create(user=user)
-
         return user
 
 
@@ -49,10 +43,9 @@ class LoginSerializer(serializers.Serializer):
         )
 
         if not user:
-            raise serializers.ValidationError("Invalid credentials")
+            raise ValidationError(ResponseMessages.INVALID_CREDENTIALS)
 
         data["user"] = user
-
         return data
 
 

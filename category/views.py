@@ -21,7 +21,7 @@ class CreateCategoryView(APIView):
         category_type = serializer.validated_data[CategoryFields.TYPE]
 
         if Category.objects.filter(user=request.user, name__iexact=name).exists():
-            return Response({AuthFields.ERROR: "A category with this name already exists."}, status=400)
+            return Response({ResponseFields.ERROR: "A category with this name already exists."}, status=400)
 
         try:
             category = Category.objects.create(
@@ -30,12 +30,12 @@ class CreateCategoryView(APIView):
                 type=category_type
             )
             return Response({
-                AuthFields.MESSAGE: "Category created",
+                ResponseFields.MESSAGE: "Category created",
                 CategoryFields.ID: category.id
             }, status=201)
 
         except IntegrityError:
-            return Response({AuthFields.ERROR: "A category with this name already exists."}, status=400)
+            return Response({ResponseFields.ERROR: "A category with this name already exists."}, status=400)
 
 class ListCategoriesView(APIView):
     permission_classes = [IsAuthenticated]

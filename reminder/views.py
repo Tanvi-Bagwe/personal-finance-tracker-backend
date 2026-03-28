@@ -36,7 +36,7 @@ class ReminderCreateView(APIView):
             due_date=serializer.validated_data[ReminderFields.DUE_DATE],
             reminder_days_before=serializer.validated_data.get(ReminderFields.REMINDER_DAYS, 1)
         )
-        return Response({AuthFields.MESSAGE: "Reminder created successfully", "id": reminder.id}, status=201)
+        return Response({ResponseFields.MESSAGE: "Reminder created successfully", "id": reminder.id}, status=201)
 
 # 3. UPDATE REMINDER (Full Edit)
 class ReminderUpdateView(APIView):
@@ -55,7 +55,7 @@ class ReminderUpdateView(APIView):
         reminder.reminder_days_before = serializer.validated_data.get(ReminderFields.REMINDER_DAYS, 1)
         reminder.save()
 
-        return Response({AuthFields.MESSAGE: "Reminder updated successfully"})
+        return Response({ResponseFields.MESSAGE: "Reminder updated successfully"})
 
 # 4. DELETE REMINDER
 class ReminderDeleteView(APIView):
@@ -64,7 +64,7 @@ class ReminderDeleteView(APIView):
     def delete(self, request, pk):
         reminder = get_object_or_404(Reminder, id=pk, user=request.user)
         reminder.delete()
-        return Response({AuthFields.MESSAGE: "Reminder deleted successfully"})
+        return Response({ResponseFields.MESSAGE: "Reminder deleted successfully"})
 
 # 5. REMINDER ACTION (Patch for Status Toggle)
 class ReminderActionView(APIView):
@@ -79,4 +79,4 @@ class ReminderActionView(APIView):
             reminder.is_completed = request.data['is_completed']
 
         reminder.save()
-        return Response({AuthFields.MESSAGE: "Reminder status updated"})
+        return Response({ResponseFields.MESSAGE: "Reminder status updated"})

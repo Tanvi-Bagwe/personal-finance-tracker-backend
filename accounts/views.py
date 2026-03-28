@@ -5,11 +5,13 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework import status
+from rest_framework.exceptions import AuthenticationFailed, ValidationError, APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
+from core.constants import ResponseMessages, ResponseFields
 from core.settings import EMAIL_HOST_USER
 from .constant import AuthFields
 from .models import PasswordResetOTP
@@ -22,16 +24,13 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
+        serializer.is_valid(raise_exception=True)
 
-            return Response({
-                AuthFields.MESSAGE: "User registered successfully"
-            })
+        serializer.save()
 
         return Response({
-            "errors": serializer.errors
-        }, status=400)
+            ResponseFields.MESSAGE: ResponseMessages.REGISTER_SUCCESS,
+        })
 
 
 class LoginView(APIView):
@@ -39,17 +38,16 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
 
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
+        serializer.is_valid(raise_exception=True)
 
-            refresh = RefreshToken.for_user(user)
+        user = serializer.validated_data["user"]
+        refresh = RefreshToken.for_user(user)
 
-            return Response({
-                AuthFields.ACCESS: str(refresh.access_token),
-                AuthFields.REFRESH: str(refresh)
-            })
-
-        return Response(serializer.errors, status=400)
+        return Response({
+            ResponseFields.MESSAGE: ResponseMessages.LOGIN_SUCCESS,
+            AuthFields.ACCESS: str(refresh.access_token),
+            AuthFields.REFRESH: str(refresh)
+        })
 
 
 class ProfileView(APIView):
@@ -71,12 +69,12 @@ class ChangePasswordView(APIView):
         new_password = request.data.get(AuthFields.NEW_PASSWORD)
 
         if not user.check_password(old_password):
-            return Response({AuthFields.ERROR: "Incorrect password"}, status=400)
+            raise ValidationError(ResponseMessages.INCORRECT_PASSWORD)
 
         user.set_password(new_password)
         user.save()
 
-        return Response({AuthFields.MESSAGE: "Password updated"})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.PASSWORD_UPDATE_SUCCESS})
 
 
 class AuthValidateTokenView(APIView):
@@ -85,60 +83,50 @@ class AuthValidateTokenView(APIView):
         refresh_token_str = request.data.get(AuthFields.REFRESH)
 
         if not access_token_str:
-            return Response({"error": "Access token required"}, status=400)
+            raise ValidationError(ResponseMessages.ACCESS_TOKEN_REQUIRED)
 
-        # 1. Try validating the Access Token
         try:
             AccessToken(access_token_str)
-            return Response({"status": "valid", "message": "Access token is valid"}, status=200)
+            return Response({
+                ResponseFields.MESSAGE: ResponseMessages.ACCESS_TOKEN_VALID
+            })
 
         except Exception:
-            # This catches BOTH InvalidToken AND low-level decoding errors (the 500 culprits)
-
-            # 2. Access is dead/malformed. Try the Refresh Token.
             if not refresh_token_str:
-                return Response({"error": "Access invalid/expired and no refresh provided"}, status=401)
+                raise AuthenticationFailed(ResponseMessages.SESSION_EXPIRED_OR_INVALID)
 
             try:
                 refresh = RefreshToken(refresh_token_str)
-                # 3. Success!
                 return Response({
-                    "status": "refreshed",
+                    ResponseFields.MESSAGE: ResponseMessages.ACCESS_TOKEN_REFRESHED,
                     AuthFields.ACCESS: str(refresh.access_token),
-                }, status=200)
+                })
 
             except Exception:
-                # 4. Refresh token is also malformed or expired
-                return Response({"error": "Session expired, please login again"}, status=401)
+                raise AuthenticationFailed(ResponseMessages.SESSION_EXPIRED)
 
 
 class RequestPasswordResetOTPView(APIView):
     def post(self, request):
-        # 1. Keep your Serializer Validation
         serializer = RequestOTPSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data[AuthFields.EMAIL]
 
-        # 2. Keep your Security-First User Lookup
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Generic response to prevent "Email Harvesting"
-            return Response({AuthFields.MESSAGE: "If an account exists, an OTP has been sent."})
+            return Response({ResponseFields.MESSAGE: ResponseMessages.OTP_SENT})
 
-        # 3. Generate OTP
         otp_code = str(random.randint(100000, 999999))
 
-        # 4. Database cleanup and creation
         PasswordResetOTP.objects.filter(user=user).delete()
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
-        # 5. Professional HTML Email Logic
         context = {'otp_code': otp_code}
         html_content = render_to_string('emails/otp_reset.html', context)
-        text_content = strip_tags(html_content)  # Fallback for plain-text clients
+        text_content = strip_tags(html_content)
 
         try:
             email_message = EmailMultiAlternatives(
@@ -150,23 +138,18 @@ class RequestPasswordResetOTPView(APIView):
             email_message.attach_alternative(html_content, "text/html")
             email_message.send()
 
-            # Keep your debug logs for dev
-            print(f"DEBUG: OTP {otp_code} sent to {email}")
 
         except Exception as e:
             print(f"SMTP Error: {e}")
-            # If email fails, we should let the user know something went wrong internally
-            return Response({AuthFields.ERROR: "Failed to send email. Please try again later."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raise APIException(ResponseMessages.OTP_SEND_FAILED)
 
-        return Response({AuthFields.MESSAGE: "OTP sent successfully."})
+        return Response({ResponseFields.MESSAGE: ResponseMessages.OTP_SENT})
 
 
 class ConfirmPasswordResetOTPView(APIView):
     def post(self, request):
         serializer = ResetPasswordOTPSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data[AuthFields.EMAIL]
         otp = serializer.validated_data[AuthFields.OTP]
@@ -176,16 +159,16 @@ class ConfirmPasswordResetOTPView(APIView):
             user = User.objects.get(email=email)
             otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp).latest('created_at')
         except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
-            return Response({AuthFields.ERROR: "Invalid OTP or Email"}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError(ResponseMessages.INVALID_EMAIL_OTP)
 
         if otp_record.is_expired():
-            return Response({AuthFields.ERROR: "OTP has expired"}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError(ResponseMessages.OTP_EXPIRED)
 
-        # Update Password
         user.set_password(new_password)
         user.save()
 
-        # Cleanup
         PasswordResetOTP.objects.filter(user=user).delete()
 
-        return Response({AuthFields.MESSAGE: "Password reset successful."})
+        return Response({
+            ResponseFields.MESSAGE: ResponseMessages.PASSWORD_RESET_SUCCESSFULL
+        })

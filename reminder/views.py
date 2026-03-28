@@ -11,6 +11,7 @@ from .constant import ReminderFields
 
 # 1. LIST ALL REMINDERS
 class ReminderListView(APIView):
+    """Get all pending reminders for the user"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -23,6 +24,7 @@ class ReminderListView(APIView):
 
 # 2. CREATE REMINDER
 class ReminderCreateView(APIView):
+    """Create a new reminder"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -40,6 +42,7 @@ class ReminderCreateView(APIView):
 
 # 3. UPDATE REMINDER (Full Edit)
 class ReminderUpdateView(APIView):
+    """Update reminder details"""
     permission_classes = [IsAuthenticated]
 
     def put(self, request, pk):
@@ -58,6 +61,7 @@ class ReminderUpdateView(APIView):
 
 # 4. DELETE REMINDER
 class ReminderDeleteView(APIView):
+    """Delete a reminder"""
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
@@ -67,6 +71,7 @@ class ReminderDeleteView(APIView):
 
 # 5. REMINDER ACTION (Patch for Status Toggle)
 class ReminderActionView(APIView):
+    """Update reminder status (mark as read/completed)"""
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):

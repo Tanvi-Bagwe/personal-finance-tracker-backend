@@ -11,44 +11,46 @@ from .models import Reminder
 
 
 def check_and_send_reminders():
+    """Check pending reminders and send email notifications"""
     today = date.today()
     # Filter for pending reminders not yet notified today
     pending = Reminder.objects.filter(is_completed=False)
 
     for r in pending:
+        # Calculate when to send reminder based on due date
         trigger_date = r.due_date - timedelta(days=r.reminder_days_before)
 
         if trigger_date <= today <= r.due_date:
-            # 1. Setup Context Data for the HTML template
+            # Setup context for email template
             context = {
                 'username': r.user.username,
                 'title': r.title,
                 'amount': r.amount,
-                'due_date': r.due_date.strftime('%B %d, %Y'),  # Prettier date format
+                'due_date': r.due_date.strftime('%B %d, %Y'),  # Format date nicely
             }
 
-            # 2. Render HTML to a string
+            # Render HTML template
             html_content = render_to_string('reminder.html', context)
 
-            # 3. Create Plain Text version (fallback for basic email clients)
+            # Create plain text version for basic email clients
             text_content = strip_tags(html_content)
 
             try:
-                # 4. Create the Email Object
+                # Create and send email
                 email = EmailMultiAlternatives(
                     subject=f"⚠️ Action Required: {r.title} Due Soon",
-                    body=text_content,  # The backup text
+                    body=text_content,
                     from_email=EMAIL_HOST_USER,
                     to=[r.user.email],
                 )
 
-                # 5. Attach the HTML version
+                # Attach HTML version
                 email.attach_alternative(html_content, "text/html")
 
-                # 6. Send
+                # Send the email
                 email.send()
 
-                # Stamp the record to prevent duplicate emails today
+                # Update record to prevent duplicate emails
                 r.save()
 
             except Exception as e:
@@ -56,10 +58,11 @@ def check_and_send_reminders():
 
 
 def start_reminder_scheduler():
+    """Start background scheduler to send reminders daily"""
     scheduler = BackgroundScheduler()
     scheduler.add_jobstore(DjangoJobStore(), "default")
 
-    # Run the check every day at 08:00 AM
+    # Schedule job to run every day at 08:00 AM
     scheduler.add_job(
         check_and_send_reminders,
         trigger='cron',

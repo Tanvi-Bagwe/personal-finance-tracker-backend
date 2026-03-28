@@ -3,6 +3,7 @@ from .models import Category
 from category.constant import CategoryFields
 
 class CreateCategorySerializer(serializers.Serializer):
+    """Serializer for creating and updating categories"""
 
     name = serializers.CharField(max_length=100)
 
@@ -11,6 +12,7 @@ class CreateCategorySerializer(serializers.Serializer):
     )
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Serializer for displaying category data"""
 
     class Meta:
         model = Category

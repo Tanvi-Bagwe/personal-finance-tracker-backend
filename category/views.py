@@ -1,10 +1,9 @@
 from django.db import IntegrityError
 from rest_framework.exceptions import ValidationError, NotFound
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from accounts.constant import AuthFields
 from core.constants import ResponseMessages, ResponseFields
 from .constant import CategoryFields
 from .models import Category
@@ -12,6 +11,7 @@ from .serializers import CreateCategorySerializer, CategorySerializer
 
 
 class CreateCategoryView(APIView):
+    """Create a new category"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -22,6 +22,7 @@ class CreateCategoryView(APIView):
         name = serializer.validated_data[CategoryFields.NAME]
         category_type = serializer.validated_data[CategoryFields.TYPE]
 
+        # Check if category with same name already exists
         if Category.objects.filter(user=request.user, name__iexact=name).exists():
             raise ValidationError(ResponseMessages.CATEGORY_EXISTS)
 
@@ -39,7 +40,9 @@ class CreateCategoryView(APIView):
         except IntegrityError:
             raise ValidationError(ResponseMessages.CATEGORY_EXISTS)
 
+
 class ListCategoriesView(APIView):
+    """Get all categories for the user"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -51,6 +54,7 @@ class ListCategoriesView(APIView):
 
 
 class UpdateCategoryView(APIView):
+    """Update an existing category"""
 
     permission_classes = [IsAuthenticated]
 
@@ -78,6 +82,7 @@ class UpdateCategoryView(APIView):
 
 
 class DeleteCategoryView(APIView):
+    """Delete a category"""
 
     permission_classes = [IsAuthenticated]
 

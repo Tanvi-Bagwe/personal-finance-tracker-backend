@@ -5,7 +5,8 @@ from accounts.constant import AuthFields
 
 
 class Category(models.Model):
-
+    """Store transaction categories for each user"""
+    
     id = models.AutoField(primary_key=True)
 
     user = models.ForeignKey(

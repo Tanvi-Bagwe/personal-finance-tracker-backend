@@ -11,6 +11,7 @@ from .serializers import CreateTransactionSerializer, TransactionSerializer
 
 
 class CreateTransactionView(APIView):
+    """Create a new transaction"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -18,7 +19,7 @@ class CreateTransactionView(APIView):
 
         serializer.is_valid(raise_exception=True)
 
-        # Ensure the category belongs to the user
+        # Check if category belongs to the user
         category_id = serializer.validated_data[TransactionFields.CATEGORY]
         try:
             category = Category.objects.get(id=category_id, user=request.user)
@@ -41,16 +42,17 @@ class CreateTransactionView(APIView):
 
 
 class ListTransactionsView(APIView):
+    """Get all transactions for the user"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Filtering by user and ordering by date descending
         transactions = Transaction.objects.filter(user=request.user).order_by('-date')
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
 
 class UpdateTransactionView(APIView):
+    """Update transaction details"""
     permission_classes = [IsAuthenticated]
 
     def put(self, request, transaction_id):
@@ -62,7 +64,7 @@ class UpdateTransactionView(APIView):
         serializer = CreateTransactionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Check category validity again if changing category
+        # Verify category belongs to the user
         category_id = serializer.validated_data[TransactionFields.CATEGORY]
         try:
             category = Category.objects.get(id=category_id, user=request.user)
@@ -81,6 +83,7 @@ class UpdateTransactionView(APIView):
 
 
 class DeleteTransactionView(APIView):
+    """Delete a transaction"""
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, transaction_id):
@@ -94,11 +97,11 @@ class DeleteTransactionView(APIView):
 
 
 class RetrieveTransactionView(APIView):
+    """Get a single transaction by ID"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, transaction_id):
-        # SECURITY: Filter by both transaction_id AND the logged-in user
-        # This prevents User A from seeing User B's transaction by ID
+        # Filter by both transaction_id and user to prevent unauthorized access
         transaction = get_object_or_404(
             Transaction,
             id=transaction_id,

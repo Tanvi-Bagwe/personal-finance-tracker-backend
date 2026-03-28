@@ -20,6 +20,7 @@ from .serializers import RegisterSerializer, LoginSerializer, ProfileSerializer,
 
 
 class RegisterView(APIView):
+    """Handle user registration"""
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -34,6 +35,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    """Handle user login and generate tokens"""
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -51,6 +53,7 @@ class LoginView(APIView):
 
 
 class ProfileView(APIView):
+    """Get authenticated user profile"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -60,6 +63,7 @@ class ProfileView(APIView):
 
 
 class ChangePasswordView(APIView):
+    """Change password for authenticated user"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -68,6 +72,7 @@ class ChangePasswordView(APIView):
         old_password = request.data.get(AuthFields.OLD_PASSWORD)
         new_password = request.data.get(AuthFields.NEW_PASSWORD)
 
+        # Verify old password before changing
         if not user.check_password(old_password):
             raise ValidationError(ResponseMessages.INCORRECT_PASSWORD)
 
@@ -78,6 +83,7 @@ class ChangePasswordView(APIView):
 
 
 class AuthValidateTokenView(APIView):
+    """Validate and refresh JWT tokens"""
     def post(self, request):
         access_token_str = request.data.get(AuthFields.ACCESS)
         refresh_token_str = request.data.get(AuthFields.REFRESH)
@@ -86,12 +92,14 @@ class AuthValidateTokenView(APIView):
             raise ValidationError(ResponseMessages.ACCESS_TOKEN_REQUIRED)
 
         try:
+            # Check if access token is valid
             AccessToken(access_token_str)
             return Response({
                 ResponseFields.MESSAGE: ResponseMessages.ACCESS_TOKEN_VALID
             })
 
         except Exception:
+            # If access token expired, try to refresh it
             if not refresh_token_str:
                 raise AuthenticationFailed(ResponseMessages.SESSION_EXPIRED_OR_INVALID)
 
@@ -107,6 +115,7 @@ class AuthValidateTokenView(APIView):
 
 
 class RequestPasswordResetOTPView(APIView):
+    """Generate and send OTP for password reset"""
     def post(self, request):
         serializer = RequestOTPSerializer(data=request.data)
         if not serializer.is_valid():
@@ -117,10 +126,13 @@ class RequestPasswordResetOTPView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            # Don't reveal if email exists or not
             return Response({ResponseFields.MESSAGE: ResponseMessages.OTP_SENT})
 
+        # Generate 6-digit OTP
         otp_code = str(random.randint(100000, 999999))
 
+        # Delete old OTPs and create new one
         PasswordResetOTP.objects.filter(user=user).delete()
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
@@ -147,6 +159,7 @@ class RequestPasswordResetOTPView(APIView):
 
 
 class ConfirmPasswordResetOTPView(APIView):
+    """Reset password using OTP"""
     def post(self, request):
         serializer = ResetPasswordOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -155,18 +168,21 @@ class ConfirmPasswordResetOTPView(APIView):
         otp = serializer.validated_data[AuthFields.OTP]
         new_password = serializer.validated_data[AuthFields.NEW_PASSWORD]
 
+        # Get user and OTP record
         try:
             user = User.objects.get(email=email)
             otp_record = PasswordResetOTP.objects.filter(user=user, otp=otp).latest('created_at')
         except (User.DoesNotExist, PasswordResetOTP.DoesNotExist):
             raise ValidationError(ResponseMessages.INVALID_EMAIL_OTP)
 
+        # Check if OTP has expired
         if otp_record.is_expired():
             raise ValidationError(ResponseMessages.OTP_EXPIRED)
 
         user.set_password(new_password)
         user.save()
 
+        # Delete used OTP
         PasswordResetOTP.objects.filter(user=user).delete()
 
         return Response({

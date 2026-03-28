@@ -13,24 +13,26 @@ from transaction.models import Transaction
 
 
 class DashboardSummaryView(APIView):
+    """Get dashboard summary with income, expense and trends"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Fetch dashboard data for the authenticated user"""
         user = request.user
 
-        # 1. Calculate Stat Card Totals
+        # Calculate total income and expense
         totals = Transaction.objects.filter(user=user).aggregate(
             total_income=Sum('amount', filter=Q(type='income')) or 0,
             total_expense=Sum('amount', filter=Q(type='expense')) or 0
         )
 
-        # 2. Expense by Category (Pie Chart)
+        # Get expenses by category for pie chart
         category_data = Transaction.objects.filter(user=user, type='expense') \
             .values('category__name') \
             .annotate(value=Sum('amount')) \
             .order_by('-value')
 
-        # 3. Monthly Trend (Last 6 Months)
+        # Get last 6 months of transactions for trend graph
         six_months_ago = date.today() - timedelta(days=180)
         monthly_stats = Transaction.objects.filter(user=user, date__gte=six_months_ago) \
             .annotate(month=TruncMonth('date')) \
@@ -38,7 +40,7 @@ class DashboardSummaryView(APIView):
             .annotate(total=Sum('amount')) \
             .order_by('month')
 
-        # 4. Reminder Pulse
+        # Count pending and overdue reminders
         reminder_stats = {
             DashboardFields.PENDING: Reminder.objects.filter(user=user, is_completed=False).count(),
             DashboardFields.OVERDUE: Reminder.objects.filter(user=user, is_completed=False, due_date__lt=date.today()).count()

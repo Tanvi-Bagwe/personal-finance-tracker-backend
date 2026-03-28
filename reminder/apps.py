@@ -3,10 +3,12 @@ from django.apps import AppConfig
 
 
 class ReminderConfig(AppConfig):
+    """Configuration for the reminder app"""
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'reminder'
 
     def ready(self):
+        """Initialize scheduler when app is ready"""
         # Skip scheduler during migrations
         if os.environ.get('RUN_MAIN') != 'true':
             return

@@ -10,6 +10,7 @@ from accounts.constant import AuthFields
 from .models import Category # Assuming Category is in the same app or imported
 
 class Transaction(models.Model):
+    """Store financial transactions (income/expense) for each user"""
     id = models.AutoField(primary_key=True)
 
     user = models.ForeignKey(

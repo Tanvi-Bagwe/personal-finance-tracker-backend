@@ -8,21 +8,25 @@ from .models import UserProfile
 from rest_framework.exceptions import ValidationError
 
 class RegisterSerializer(serializers.Serializer):
+    # Serializer for user registration
     username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6)
 
     def validate_username(self, value):
+        # Check if username already exists
         if User.objects.filter(username=value).exists():
             raise ValidationError(ResponseMessages.USERNAME_EXISTS)
         return value
 
     def validate_email(self, value):
+        # Check if email already exists
         if User.objects.filter(email=value).exists():
             raise ValidationError(ResponseMessages.EMAIL_EXISTS)
         return value
 
     def create(self, validated_data):
+        # Create new user and profile
         user = User.objects.create_user(
             username=validated_data[AuthFields.USERNAME],
             email=validated_data[AuthFields.EMAIL],
@@ -33,10 +37,12 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    # Serializer for user login
     username = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, data):
+        # Authenticate user with provided credentials
         user = authenticate(
             username=data[AuthFields.USERNAME],
             password=data[AuthFields.PASSWORD]
@@ -50,16 +56,19 @@ class LoginSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    # Serializer for user profile data
     class Meta:
         model = User
         fields = ["id", "username", "email"]
 
 
 class RequestOTPSerializer(serializers.Serializer):
+    # Serializer for requesting OTP
     email = serializers.EmailField()
 
 
 class ResetPasswordOTPSerializer(serializers.Serializer):
+    # Serializer for resetting password with OTP
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
     new_password = serializers.CharField(min_length=8)

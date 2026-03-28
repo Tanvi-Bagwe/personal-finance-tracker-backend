@@ -1,8 +1,9 @@
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, DecimalField, Value
 from django.db.models.functions import TruncMonth, Coalesce
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from decimal import Decimal
 
 from core.constants import ResponseMessages, ResponseFields
 from dashboard.constant import DashboardFields
@@ -10,7 +11,6 @@ from reminder.models import Reminder
 from datetime import date, timedelta
 
 from transaction.models import Transaction
-
 
 class DashboardSummaryView(APIView):
     """Get dashboard summary with income, expense and trends"""
@@ -20,10 +20,16 @@ class DashboardSummaryView(APIView):
         """Fetch dashboard data for the authenticated user"""
         user = request.user
 
-        # Calculate total income and expense (Coalesce handles None values)
+        # Calculate total income and expense (use Value() with DecimalField to match type)
         totals = Transaction.objects.filter(user=user).aggregate(
-            total_income=Coalesce(Sum('amount', filter=Q(type='income')), 0),
-            total_expense=Coalesce(Sum('amount', filter=Q(type='expense')), 0)
+            total_income=Coalesce(
+                Sum('amount', filter=Q(type='income')),
+                Value(Decimal('0.00'), output_field=DecimalField())
+            ),
+            total_expense=Coalesce(
+                Sum('amount', filter=Q(type='expense')),
+                Value(Decimal('0.00'), output_field=DecimalField())
+            )
         )
 
         # Get expenses by category for pie chart
@@ -43,7 +49,8 @@ class DashboardSummaryView(APIView):
         # Count pending and overdue reminders
         reminder_stats = {
             DashboardFields.PENDING: Reminder.objects.filter(user=user, is_completed=False).count(),
-            DashboardFields.OVERDUE: Reminder.objects.filter(user=user, is_completed=False, due_date__lt=date.today()).count()
+            DashboardFields.OVERDUE: Reminder.objects.filter(user=user, is_completed=False,
+                                                             due_date__lt=date.today()).count()
         }
 
         return Response({

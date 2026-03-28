@@ -4,24 +4,6 @@ A comprehensive Django REST API backend for a personal finance tracking applicat
 
 ---
 
-## 📋 Table of Contents
-
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Installation & Setup](#installation--setup)
-- [Configuration](#configuration)
-- [Running the Server](#running-the-server)
-- [API Endpoints](#api-endpoints)
-- [Database Schema](#database-schema)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
 ## 🎯 Project Overview
 
 **Smart Personal Finance Tracker** is an assignment project designed to help users track their financial activities. The backend provides RESTful APIs for user authentication, transaction management, expense categorization, budget tracking, and automated bill reminders.
